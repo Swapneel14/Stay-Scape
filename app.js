@@ -22,12 +22,12 @@ const User= require('./models/user.js');
 const store=new MongoStore({
         mongoUrl:dblink,
         crypto:{
-            secret:"mysupersecretcode"
+            secret:process.env.SECRET
         },
         touchAfter:24*3600
     });
 const sessionoptions={
-    secret:"mysupersecretcode",
+    secret:process.env.SECRET,
     resave:false,
     saveUninitialized:true,
     store:store ,
@@ -79,7 +79,7 @@ passport.deserializeUser(User.deserializeUser());
 app.use((req,res,next)=>{
     res.locals.success= req.flash('success');
     res.locals.error=req.flash('error');
-    res.locals.curruser= req.user;
+    res.locals.curruser= req.user||null;
     next();
 })
 
@@ -100,6 +100,7 @@ app.use("/",users);
 
 //Custom Error Handler
 app.use((err, req, res, next) => {
+     console.log(err);
     let { status = 500, message = "Some Error Occured" } = err;
     res.status(status).render("listings/error.ejs", { message });
 });
