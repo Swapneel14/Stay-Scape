@@ -5,43 +5,20 @@ const wrap = require("../utils/wrap.js");
 const passport=require('passport');
 const { saveRedirectUrl } = require("../middleware.js");
 
+const usercontroller= require("../controllers/user.js");
+
 
 //SignUp-GET
-router.get("/signup",(req,res)=>{
-    res.render("users/signup.ejs");
-})
+router.get("/signup",usercontroller.renderSignupForm);
 
 //SignUp-POST
 router.post("/signup",
-   wrap(
-     async(req,res,next)=>{
-    try{
-        let {username,email,password}=req.body;
-    const newUser= new User({email,username});
-    const rUser= await User.register(newUser,password);
-    console.log(rUser);
-    req.login(rUser,(err)=>{
-        if(err){
-            return next(err);
-        }
-       req.flash("success",`Welcome to Stay-Scape,Mr ${username}!`);
-       res.redirect("/listing");
-    })
-   
-    }
-    catch(err){
-        req.flash("error",err.message);
-        res.redirect("/signup");
-    }
-}
-   )
+   wrap(usercontroller.signup)
 
-)
+);
 
 //Login-GET
-router.get("/login",(req,res)=>{
-    res.render("users/login.ejs");
-})
+router.get("/login",usercontroller.renderLoginForm);
 
 //Login-Post
 router.post(
@@ -51,21 +28,9 @@ router.post(
     failureRedirect:"/login",
     failureFlash:true
 }),
-async(req,res,next)=>{
-    let {username}=req.body;
-    req.flash('success',`Welcome Back to Stay-Scape,Mr ${username}`);
-    let url=res.locals.redirectURL||"/listing";
-    res.redirect(url);
-})
+ wrap(usercontroller.login)
+)
 
-router.get("/logout",(req,res,next)=>{
-    req.logout((err)=>{
-        if(err){
-            next(err);
-        }
-        req.flash('success',"Logged out Successfully!!");
-        res.redirect("/listing");
-    })
-})
+router.get("/logout",wrap(usercontroller.logout));
 
 module.exports=router

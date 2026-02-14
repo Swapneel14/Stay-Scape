@@ -1,7 +1,11 @@
+require('dotenv').config();
+console.log(process.env.API_KEY);
+
 const express = require("express");
 const app = express();
 const mongoose = require("mongoose");
 const mongolink = "mongodb://127.0.0.1:27017/wanderlust";
+const dblink=process.env.ATLAS_URL;
 const path = require('path');
 const methodoverride = require("method-override");
 const ejsmate = require("ejs-mate");
@@ -9,22 +13,33 @@ const listings = require("./routes/listing.js");
 const reviews = require("./routes/review.js");
 const users = require("./routes/user.js");
 const session= require('express-session');
+const { MongoStore }=require('connect-mongo');
 const flash= require('connect-flash');
 const passport=require('passport');
 const localstrategy=require("passport-local");
 const User= require('./models/user.js');
 
+const store=new MongoStore({
+        mongoUrl:dblink,
+        crypto:{
+            secret:"mysupersecretcode"
+        },
+        touchAfter:24*3600
+    });
 const sessionoptions={
     secret:"mysupersecretcode",
     resave:false,
     saveUninitialized:true,
+    store:store ,
     cookie:{
         expires: Date.now()+ 7*24*60*60*1000,
         maxAge:7*24*60*60*1000
     }
 };
 
-
+store.on('error',()=>{
+  console.log("ERROR in MONGO SESSION STORE",err);
+})
 
 main()
     .then(() => {
@@ -35,7 +50,7 @@ main()
     })
 
 async function main() {
-    await mongoose.connect(mongolink);
+    await mongoose.connect(dblink);
 }
 
 app.set("view engine", "ejs");
